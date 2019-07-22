@@ -1,0 +1,577 @@
+$ ltrace ./riddle
+getenv("I_NEED_TECH_HINTS")                      = nil
+
+$ export I_NEED_TECH_HINTS=1
+$ ltrace ./riddle
+getenv("I_NEED_TECH_HINTS")                      = "1"
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   0: 'Hello there'
+Hint:          'Processes run system calls'.
+FAIL
+
+$ strace ./riddle
+openat(AT_FDCWD, ".hello_there", O_RDONLY) = -1 ENOENT (No such file or directory)
+
+$ touch .hello_there
+$ strace ./riddle
+openat(AT_FDCWD, ".hello_there", O_RDONLY) = 4
+close(4)                                = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   1: 'Gatekeeper'
+Hint:          'Stand guard, let noone pass'.
+... I found the doors unlocked. FAIL
+
+$ strace ./riddle
+openat(AT_FDCWD, ".hello_there", O_WRONLY) = 4
+close(4)                                = 0
+
+$ chmod -w .hello_there
+$ strace ./riddle
+openat(AT_FDCWD, ".hello_there", O_WRONLY) = -1 EACCES (Permission denied)
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   2: 'A time to kill'
+Hint:          'Stuck in the dark, help me move on'.
+You were eaten by a grue. FAIL
+
+$ strace ./riddle
+rt_sigaction(SIGALRM, {sa_handler=0x55eaf3594d40, sa_mask=[ALRM], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f567c0b8f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGCONT, {sa_handler=0x55eaf3594d40, sa_mask=[CONT], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f567c0b8f20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+alarm(10)                               = 0
+pause()                                 = ? ERESTARTNOHAND (To be restarted if no handler)
+--- SIGALRM {si_signo=SIGALRM, si_code=SI_KERNEL} ---
+rt_sigreturn({mask=[]})                 = -1 EINTR (Interrupted system call)
+
+$ killall -CONT riddle
+$ strace ./riddle
+rt_sigaction(SIGALRM, {sa_handler=0x55e943ea4d40, sa_mask=[ALRM], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f100721ff20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+rt_sigaction(SIGCONT, {sa_handler=0x55e943ea4d40, sa_mask=[CONT], sa_flags=SA_RESTORER|SA_RESTART, sa_restorer=0x7f100721ff20}, {sa_handler=SIG_DFL, sa_mask=[], sa_flags=0}, 8) = 0
+alarm(10)                               = 0
+pause()                                 = ? ERESTARTNOHAND (To be restarted if no handler)
+--- SIGCONT {si_signo=SIGCONT, si_code=SI_USER, si_pid=13314, si_uid=1000} ---
+rt_sigreturn({mask=[]})                 = -1 EINTR (Interrupted system call)
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   3: 'what is the answer to life the universe and everything?'
+Hint:          'ltrace'.
+FAIL
+
+$ ltrace ./riddle
+getenv("ANSWER")                                                                    = nil
+
+$ export ANSWER=42
+$ ltrace ./riddle
+getenv("ANSWER")                                 = "42"
+strtol(0x7ffe383bad08, 0, 10, 11)                = 42
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   4: 'First-in, First-out'
+Hint:          'Mirror, mirror on the wall, who in this land is fairest of all?'.
+Hint:          'named pipe, mkfifo, mknod'.
+I cannot see my reflection. FAIL
+
+$ touch magic_mirror
+$ strace ./riddle
+openat(AT_FDCWD, "magic_mirror", O_RDWR) = 4
+write(4, "N", 1)                        = 1
+read(4, "", 1)                          = 0
+
+$ mkfifo magic_mirror
+$ strace ./riddle
+openat(AT_FDCWD, "magic_mirror", O_RDWR) = 4
+write(4, "Y", 1)                        = 1
+read(4, "Y", 1)                         = 1
+write(4, "P", 1)                        = 1
+read(4, "P", 1)                         = 1
+write(4, "H", 1)                        = 1
+read(4, "H", 1)                         = 1
+write(4, "Q", 1)                        = 1
+read(4, "Q", 1)                         = 1
+write(4, "S", 1)                        = 1
+read(4, "S", 1)                         = 1
+write(4, "N", 1)                        = 1
+read(4, "N", 1)                         = 1
+write(4, "T", 1)                        = 1
+read(4, "T", 1)                         = 1
+write(4, "Y", 1)                        = 1
+read(4, "Y", 1)                         = 1
+write(4, "G", 1)                        = 1
+read(4, "G", 1)                         = 1
+write(4, "E", 1)                        = 1
+read(4, "E", 1)                         = 1
+close(4)                                = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   5: 'my favourite fd is 99'
+Hint:          'when I bang my head against the wall it goes: dup! dup! dup!'.
+Hint:          'dup, dup2'.
+FAIL
+
+$ strace ./riddle
+fcntl(99, F_GETFD)                      = -1 EBADF (Bad file descriptor)
+
+$ strace ./a.out
+fcntl(99, F_GETFD)                      = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   6: 'ping pong'
+Hint:          'help us play!'.
+Hint:          'strace --help 2>&1 | egrep -e '-f''.
+[7350] PING!
+FAIL
+
+$ strace -f ./riddle
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7c54b75a10) = 6154
+strace: Process 6154 attached
+[pid  6153] clone( <unfinished ...>
+[pid  6154] getpid( <unfinished ...>
+[pid  6153] <... clone resumed> child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f7c54b75a10) = 6155
+strace: Process 6155 attached
+[pid  6154] <... getpid resumed> )      = 6154
+[pid  6153] wait4(-1,  <unfinished ...>
+[pid  6154] fstat(1,  <unfinished ...>
+[pid  6155] alarm(2 <unfinished ...>
+[pid  6154] <... fstat resumed> {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+[pid  6155] <... alarm resumed> )       = 0
+[pid  6155] read(33,  <unfinished ...>
+[pid  6155] <... read resumed> 0x7ffde9aeb66c, 4) = -1 EBADF (Bad file descriptor)
+[pid  6155] alarm(0 <unfinished ...>
+[pid  6154] write(34, "\0\0\0\0", 4 <unfinished ...>
+[pid  6155] <... alarm resumed> )       = 2
+[pid  6154] <... write resumed> )       = -1 EBADF (Bad file descriptor)
+[pid  6155] exit_group(1)               = ?
+[pid  6154] exit_group(1)               = ?
+[pid  6155] +++ exited with 1 +++
+[pid  6153] <... wait4 resumed> [{WIFEXITED(s) && WEXITSTATUS(s) == 1}], 0, NULL) = 6155
+[pid  6154] +++ exited with 1 +++
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6155, si_uid=1000, si_status=1, si_utime=0, si_stime=0} ---
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=6154, si_uid=1000, si_status=1, si_utime=0, si_stime=0} ---
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 1}], 0, NULL) = 6154
+
+$ strace -f ./a.out
+clone(child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f2c86105a10) = 8203
+strace: Process 8203 attached
+[pid  8202] clone( <unfinished ...>
+[pid  8203] getpid()                    = 8203
+strace: Process 8204 attached
+[pid  8202] <... clone resumed> child_stack=NULL, flags=CLONE_CHILD_CLEARTID|CLONE_CHILD_SETTID|SIGCHLD, child_tidptr=0x7f2c86105a10) = 8204
+[pid  8203] fstat(1,  <unfinished ...>
+[pid  8202] wait4(-1,  <unfinished ...>
+[pid  8203] <... fstat resumed> {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+[pid  8204] alarm(2)                    = 0
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] write(34, "\0\0\0\0", 4)    = 4
+[pid  8204] <... read resumed> "\0\0\0\0", 4) = 4
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] getpid()                    = 8204
+[pid  8204] fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\1\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\1\0\0\0", 4) = 4
+[pid  8204] alarm(2 <unfinished ...>
+[pid  8203] alarm(0 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 0
+[pid  8203] <... alarm resumed> )       = 2
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] getpid()                    = 8203
+[pid  8203] getpid()                    = 8203
+[pid  8203] write(34, "\2\0\0\0", 4)    = 4
+[pid  8204] <... read resumed> "\2\0\0\0", 4) = 4
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] getpid()                    = 8204
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\3\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\3\0\0\0", 4) = 4
+[pid  8204] alarm(2 <unfinished ...>
+[pid  8203] alarm(0 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 0
+[pid  8203] <... alarm resumed> )       = 2
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] getpid()                    = 8203
+[pid  8203] getpid()                    = 8203
+[pid  8203] write(34, "\4\0\0\0", 4 <unfinished ...>
+[pid  8204] <... read resumed> "\4\0\0\0", 4) = 4
+[pid  8203] <... write resumed> )       = 4
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] getpid( <unfinished ...>
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] <... getpid resumed> )      = 8204
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\5\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\5\0\0\0", 4) = 4
+[pid  8204] alarm(2 <unfinished ...>
+[pid  8203] alarm(0 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 0
+[pid  8203] <... alarm resumed> )       = 2
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] getpid()                    = 8203
+[pid  8203] getpid()                    = 8203
+[pid  8203] write(34, "\6\0\0\0", 4 <unfinished ...>
+[pid  8204] <... read resumed> "\6\0\0\0", 4) = 4
+[pid  8203] <... write resumed> )       = 4
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] getpid( <unfinished ...>
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] <... getpid resumed> )      = 8204
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\7\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\7\0\0\0", 4) = 4
+[pid  8204] alarm(2 <unfinished ...>
+[pid  8203] alarm(0 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 0
+[pid  8203] <... alarm resumed> )       = 2
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] getpid()                    = 8203
+[pid  8203] getpid()                    = 8203
+[pid  8203] write(34, "\10\0\0\0", 4 <unfinished ...>
+[pid  8204] <... read resumed> "\10\0\0\0", 4) = 4
+[pid  8203] <... write resumed> )       = 4
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] getpid( <unfinished ...>
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] <... getpid resumed> )      = 8204
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\t\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\t\0\0\0", 4) = 4
+[pid  8204] alarm(2 <unfinished ...>
+[pid  8203] alarm(0 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 0
+[pid  8203] <... alarm resumed> )       = 2
+[pid  8204] read(33,  <unfinished ...>
+[pid  8203] getpid()                    = 8203
+[pid  8203] getpid()                    = 8203
+[pid  8203] write(34, "\n\0\0\0", 4 <unfinished ...>
+[pid  8204] <... read resumed> "\n\0\0\0", 4) = 4
+[pid  8203] <... write resumed> )       = 4
+[pid  8204] alarm(0 <unfinished ...>
+[pid  8203] alarm(2 <unfinished ...>
+[pid  8204] <... alarm resumed> )       = 2
+[pid  8203] <... alarm resumed> )       = 0
+[pid  8204] getpid( <unfinished ...>
+[pid  8203] read(53,  <unfinished ...>
+[pid  8204] <... getpid resumed> )      = 8204
+[pid  8204] getpid()                    = 8204
+[pid  8204] write(54, "\v\0\0\0", 4)    = 4
+[pid  8203] <... read resumed> "\v\0\0\0", 4) = 4
+[pid  8203] alarm(0)                    = 2
+[pid  8203] getpid()                    = 8203
+[pid  8204] exit_group(0 <unfinished ...>
+[pid  8204] <... exit_group resumed>)   = ?
+[pid  8204] +++ exited with 0 +++
+[pid  8202] <... wait4 resumed> [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 8204
+[pid  8203] exit_group(0)               = ?
+[pid  8203] +++ exited with 0 +++
+--- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=8204, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
+wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 8203
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   7: 'What's in a name?'
+Hint:          'A rose, by any other name...'.
+Hint:          'hard links'.
+FAIL
+
+$ strace ./riddle
+lstat(".hello_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+lstat(".hey_there", 0x7ffdfb5dcec0)     = -1 ENOENT (No such file or directory)
+
+...would smell as sweet. SUCCESS
+
+$ ln .hello_there .hey_there
+lstat(".hello_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+lstat(".hey_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   8: 'Big Data'
+Hint:          'Checking footers'.
+Hint:          'lseek, sparse files'.
+Data files must be present and whole. FAIL
+
+$ touch bf00
+$ strace ./riddle
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "", 16)                         = 0
+write(1, "X", 1X)                        = 1
+close(4)                                = 0
+
+$ ./a.out
+$ strace ./riddle
+openat(AT_FDCWD, "bf00", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+fstat(1, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 0), ...}) = 0
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf01", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf02", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf03", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf04", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf05", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf06", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf07", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf08", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+openat(AT_FDCWD, "bf09", O_RDONLY)      = 4
+lseek(4, 1073741824, SEEK_SET)          = 1073741824
+read(4, "abcdefghijklmnop", 16)         = 16
+write(1, ".", 1.)                        = 1
+close(4)                                = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge   9: 'Connect'
+Hint:          'Let me whisper in your ear'.
+Hint:          'netcat, socat, listen'.
+I am trying to contact you...\n...but you don't seem to listen.\nFAIL
+
+$ strace ./riddle
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 4
+connect(4, {sa_family=AF_INET, sin_port=htons(49842), sin_addr=inet_addr("127.0.0.1")}, 16) = -1 ECONNREFUSED (Connection refused)
+
+$ nc -l localhost 49842
+How much is 3198 + 1? 3199
+$ strace ./riddle
+socket(AF_INET, SOCK_STREAM, IPPROTO_IP) = 4
+connect(4, {sa_family=AF_INET, sin_port=htons(49842), sin_addr=inet_addr("127.0.0.1")}, 16) = 0
+getpid()                                = 3198
+read(4, "3199\n", 100)                  = 5
+getpid()                                = 3198
+
+----------------------------------------------------------------------------------------------------
+
+Challenge  10: 'ESP'
+Hint:          'Can you read my mind?'.
+Hint:          'unlink'.
+What hex number am I thinking of right now? 
+You're only guessing, and I am wasting my time.\nFAIL
+
+$ strace ./riddle
+openat(AT_FDCWD, "secret_number", O_RDWR|O_CREAT|O_TRUNC, 0600) = 4
+unlink("secret_number")                 = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7f06e8525000
+close(4)                                = 0
+fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+read(0, 
+"\n", 1024)                     = 1
+
+$ strace -f ./a.out
+[pid   805] openat(AT_FDCWD, "secret_number", O_RDWR|O_CREAT|O_TRUNC, 0600) = 5
+[pid   805] unlink("secret_number")     = 0
+[pid   805] mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 5, 0) = 0x7f61fbec3000
+[pid   805] close(5)                    = 0
+[pid   805] fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+[pid   805] read(0,  <unfinished ...>
+[pid   805] <... read resumed> "A11CFA7C\n", 1024) = 9
+
+----------------------------------------------------------------------------------------------------
+
+Challenge  11: 'ESP-2'
+Hint:          'Can you read my mind?'.
+Hint:          'unlink'.
+What hex number am I thinking of right now? 
+You're only guessing, and I am wasting my time.\nFAIL
+
+$ strace ./riddle
+openat(AT_FDCWD, "secret_number", O_RDWR|O_CREAT|O_TRUNC, 0600) = 4
+unlink("secret_number")                 = 0
+fstat(4, {st_mode=S_IFREG|0600, st_size=0, ...}) = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7f06e8524000
+close(4)                                = 0
+read(0, 
+"\n", 1024)                     = 1
+
+$ strace -f ./a.out
+[pid  1925] openat(AT_FDCWD, "secret_number", O_RDWR|O_CREAT|O_TRUNC, 0600) = 5
+[pid  1925] unlink("secret_number")     = 0
+[pid  1925] fstat(5, {st_mode=S_IFREG|0700, st_size=0, ...}) = 0
+[pid  1925] mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 5, 0) = 0x7f5e2512d000
+[pid  1925] close(5)                    = 0
+[pid  1925] fstat(0, {st_mode=S_IFCHR|0620, st_rdev=makedev(136, 1), ...}) = 0
+[pid  1925] read(0,  <unfinished ...>
+[pid  1925] <... read resumed> "7C88BE21\n", 1024) = 9
+
+----------------------------------------------------------------------------------------------------
+
+Challenge  12: 'A delicate change'
+Hint:          'Do only what is required, nothing more, nothing less'.
+Hint:          'mmap'.
+I want to find the char 'H' at 0x7f3a23e5006f
+
+$ strace ./riddle
+getpid()                                = 4461
+openat(AT_FDCWD, "/tmp/riddle-osOk7t", O_RDWR|O_CREAT|O_EXCL, 0600) = 4
+ftruncate(4, 4096)                      = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7fbd9b945000
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffd86d81b60) = 0
+close(4)                                = 0
+unlink("/tmp/riddle-osOk7t")            = 0
+
+$ ./a.out /tmp/riddle-tLxPnb Z
+$ strace ./riddle
+getpid()                                = 23674
+openat(AT_FDCWD, "/tmp/riddle-tLxPnb", O_RDWR|O_CREAT|O_EXCL, 0600) = 4
+ftruncate(4, 4096)                      = 0
+mmap(NULL, 4096, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7f3967fbf000
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffddfb6b4d0) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffddfb6b4d0) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffddfb6b4d0) = 0
+nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffddfb6b4d0) = 0
+close(4)                                = 0
+unlink("/tmp/riddle-tLxPnb")            = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge  13: 'Bus error'
+Hint:          'Memquake! Don't lose the pages beneath your something something'.
+Hint:          'mmap, where have my pages gone?'.
+FAIL
+
+$ strace ./riddle
+openat(AT_FDCWD, ".hello_there", O_RDWR|O_CREAT, 0600) = 4
+ftruncate(4, 32768)                     = 0
+mmap(NULL, 32768, PROT_READ|PROT_WRITE, MAP_SHARED, 4, 0) = 0x7fd37dc42000
+ftruncate(4, 16384)                     = 0
+read(0, 
+"2", 1)                         = 1
+--- SIGBUS {si_signo=SIGBUS, si_code=BUS_ADRERR, si_addr=0x7fd37dc46000} ---
++++ killed by SIGBUS (core dumped) +++
+Bus error (core dumped)
+
+$ strace -f ./a.out
+[pid 27823] openat(AT_FDCWD, ".hello_there", O_RDWR|O_CREAT, 0600) = 5
+[pid 27823] ftruncate(5, 32768)         = 0
+[pid 27823] mmap(NULL, 32768, PROT_READ|PROT_WRITE, MAP_SHARED, 5, 0) = 0x7f5fd6cd0000
+[pid 27823] ftruncate(5, 16384)         = 0
+[pid 27823] read(0,  <unfinished ...>
+[pid 27822] <... nanosleep resumed> 0x7fffad48ad80) = 0
+[pid 27822] ftruncate(3, 32768)         = 0
+[pid 27822] exit_group(0)               = ?
+[pid 27822] +++ exited with 0 +++
+<... read resumed> "\n", 1)             = 1
+munmap(0x7f5fd6cd0000, 32768)           = 0
+close(5)                                = 0
+
+----------------------------------------------------------------------------------------------------
+
+Challenge  14: 'Are you the One?'
+Hint:          'Are you 32767? If not, reincarnate!'.
+Hint:          'fork'.
+I don't like my PID, get me another one. FAIL
+
+$ strace ./riddle
+getpid()                                = 29725
+
+$ strace  -f ./a.out
+[pid 32767] getpid()                    = 32767
