@@ -13,7 +13,7 @@
 
 /* Compile-time parameters */
 
-#ifdef __KERNEL__ 
+#ifdef __KERNEL__
 
 /*
  * Function prototypes
@@ -21,7 +21,6 @@
 int lunix_ldisc_init(void);
 void lunix_ldisc_destroy(void);
 
-#endif	/* __KERNEL__ */
+#endif /* __KERNEL__ */
 
-#endif	/* _LUNIX_H */
-
+#endif /* _LUNIX_H */
