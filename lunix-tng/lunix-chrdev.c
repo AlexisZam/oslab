@@ -139,7 +139,8 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     // state->buf_data;
     state->buf_timestamp = 0;
 
-    init_MUTEX(&state->lock);
+    sema_init(&state->lock, 1);
+    // init_MUTEX(&state->lock);
 
     filp->private_data = state;
 out:
@@ -190,8 +191,10 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     }
 
     /* End of file */
-    if (*f_pos >= state->buf_lim)
+    if (*f_pos >= state->buf_lim) {
+        ret = 0;
         goto out;
+    }
 
     /* Determine the number of cached bytes to copy to userspace */
     if (cnt > state->buf_lim - *f_pos)
