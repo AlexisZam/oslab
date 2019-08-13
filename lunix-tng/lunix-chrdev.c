@@ -4,7 +4,7 @@
  * Implementation of character devices
  * for Lunix:TNG
  *
- * < Your name here >
+ * Alexis Zamanis
  *
  */
 
@@ -41,10 +41,7 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
     struct lunix_sensor_struct *sensor;
 
     WARN_ON(!(sensor = state->sensor));
-    /* ? */
-
-    /* The following return is bogus, just for the stub to compile */
-    return 0; /* ? */
+    return sensor->msr_data[state->type]->last_update != state->buf_timestamp;
 }
 
 /*
@@ -54,27 +51,48 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
  */
 static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
     struct lunix_sensor_struct *sensor;
+    unsigned long flags;
+    uint32_t last_update, value;
+    long res;
 
-    debug("leaving\n");
+    debug("entering\n");
 
     /*
 	 * Grab the raw data quickly, hold the
 	 * spinlock for as little as possible.
 	 */
-    /* ? */
-    /* Why use spinlocks? See LDD3, p. 119 */
+    sensor = state->sensor;
+    spin_lock_irqsave(&sensor->lock, flags);
 
     /*
 	 * Any new data available?
 	 */
-    /* ? */
+    if (!lunix_chrdev_state_needs_refresh(state)) {
+        spin_unlock_irqrestore(&sensor->lock, flags);
+        return -EAGAIN;
+    }
+    last_update = sensor->msr_data[state->type]->last_update;
+    value = sensor->msr_data[state->type]->values[0];
+    spin_unlock_irqrestore(&sensor->lock, flags);
 
     /*
 	 * Now we can take our time to format them,
 	 * holding only the private state semaphore
 	 */
+    switch (state->type) {
+    case BATT:
+        res = lookup_voltage[value];
+        break;
+    case TEMP:
+        res = lookup_temperature[value];
+        break;
+    case LIGHT:
+        res = lookup_light[value];
+        break;
+    }
 
-    /* ? */
+    state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", res >= 0 ? '' : '-', res / 1000, res % 1000);
+    state->buf_timestamp = timestamp;
 
     debug("leaving\n");
     return 0;
@@ -87,7 +105,10 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
 
 static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     /* Declarations */
-    /* ? */
+    unsigned int minor;
+    enum lunix_msr_enum type;
+    struct lunix_sensor_struct sensor;
+    struct lunix_chrdev_state_struct *state;
     int ret;
 
     debug("entering\n");
@@ -99,16 +120,35 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
 	 * Associate this open file with the relevant sensor based on
 	 * the minor number of the device node [/dev/sensor<NO>-<TYPE>]
 	 */
+    minor = iminor(inode);
+    type = minor & 7;
+    sensor = lunix_sensors[minor >> 3];
 
     /* Allocate a new Lunix character device private state structure */
-    /* ? */
+    state = kzalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
+    if (!state) {
+        printk(KERN_ERR "Failed to allocate memory for state\n");
+        ret = -ENOMEM;
+        goto out;
+    }
+
+    state->type = type;
+    state->sensor = &sensor;
+
+    state->buf_lim = 0;
+    // state->buf_data;
+    state->buf_timestamp = 0;
+
+    init_MUTEX(&state->lock);
+
+    filp->private_data = state;
 out:
     debug("leaving, with ret = %d\n", ret);
     return ret;
 }
 
 static int lunix_chrdev_release(struct inode *inode, struct file *filp) {
-    /* ? */
+    kfree(filp->private_data);
     return 0;
 }
 
@@ -129,7 +169,8 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     sensor = state->sensor;
     WARN_ON(!sensor);
 
-    /* Lock? */
+    if (down_interruptible(&state->lock))
+        return -ERESTARTSYS;
     /*
 	 * If the cached character device state needs to be
 	 * updated by actual sensor data (i.e. we need to report
@@ -137,22 +178,38 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
 	 */
     if (*f_pos == 0) {
         while (lunix_chrdev_state_update(state) == -EAGAIN) {
-            /* ? */
+            up(&state->lock);
+            if (filp->f_flags & O_NONBLOCK)
+                return -EAGAIN;
             /* The process needs to sleep */
-            /* See LDD3, page 153 for a hint */
+            if (wait_event_interruptible(sensor->wq, lunix_chrdev_state_needs_refresh(state))
+                return -ERESTARTSYS;
+            if (down_interruptible(&state->lock))
+                return -ERESTARTSYS;
         }
     }
 
     /* End of file */
-    /* ? */
+    if (*f_pos >= state->buf_lim)
+        goto out;
 
     /* Determine the number of cached bytes to copy to userspace */
-    /* ? */
+    if (cnt > state->buf_lim - *f_pos)
+        cnt = state->buf_lim - *f_pos;
+
+    if (copy_to_user(usrbuf, state->buf_data + *f_pos, cnt)) {
+        ret = -EFAULT;
+        goto out;
+    }
+
+    *f_pos += cnt;
+    ret = cnt;
 
     /* Auto-rewind on EOF mode? */
-    /* ? */
+    if (*f_pos >= state->buf_lim)
+        *f_pos = 0;
 out:
-    /* Unlock? */
+    up(&state->lock);
     return ret;
 }
 
@@ -184,14 +241,12 @@ int lunix_chrdev_init(void) {
     lunix_chrdev_cdev.owner = THIS_MODULE;
 
     dev_no = MKDEV(LUNIX_CHRDEV_MAJOR, 0);
-    /* ? */
-    /* register_chrdev_region? */
+    ret = register_chrdev_region(dev_no, lunix_minor_cnt, "lunix");
     if (ret < 0) {
         debug("failed to register region, ret = %d\n", ret);
         goto out;
     }
-    /* ? */
-    /* cdev_add? */
+    ret = cdev_add(&lunix_chrdev_cdev, dev_no, lunix_minor_cnt);
     if (ret < 0) {
         debug("failed to add character device\n");
         goto out_with_chrdev_region;
