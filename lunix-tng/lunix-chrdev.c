@@ -91,8 +91,8 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
         break;
     }
 
-    state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", res >= 0 ? '' : '-', res / 1000, res % 1000);
-    state->buf_timestamp = timestamp;
+    state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", res >= 0 ? ' ' : '-', res / 1000, res % 1000);
+    state->buf_timestamp = last_update;
 
     debug("leaving\n");
     return 0;
@@ -182,7 +182,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
             if (filp->f_flags & O_NONBLOCK)
                 return -EAGAIN;
             /* The process needs to sleep */
-            if (wait_event_interruptible(sensor->wq, lunix_chrdev_state_needs_refresh(state))
+            if (wait_event_interruptible(sensor->wq, lunix_chrdev_state_needs_refresh(state)))
                 return -ERESTARTSYS;
             if (down_interruptible(&state->lock))
                 return -ERESTARTSYS;
