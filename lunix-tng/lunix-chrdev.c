@@ -131,7 +131,7 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     state->type = minor & 7;
     state->sensor = &lunix_sensors[minor >> 3];
 
-    state->buf_timestamp = state->sensor->msr_data[private_data->type]->last_update;
+    state->buf_timestamp = state->sensor->msr_data[state->type]->last_update;
 
     sema_init(&state->lock, 1); // init_MUTEX(&state->lock);
 
