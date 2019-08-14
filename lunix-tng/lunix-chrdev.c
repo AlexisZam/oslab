@@ -41,7 +41,7 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
     struct lunix_sensor_struct *sensor;
 
     WARN_ON(!(sensor = state->sensor));
-    return sensor->msr_data[state->type]->last_update != state->buf_timestamp;
+    return sensor->msr_data[state->type]->last_update > state->buf_timestamp;
 }
 
 /*
@@ -106,8 +106,6 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
 static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     /* Declarations */
     unsigned int minor;
-    enum lunix_msr_enum type;
-    struct lunix_sensor_struct sensor;
     struct lunix_chrdev_state_struct *state;
     int ret;
 
@@ -121,8 +119,6 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
 	 * the minor number of the device node [/dev/sensor<NO>-<TYPE>]
 	 */
     minor = iminor(inode);
-    type = minor & 7;
-    sensor = lunix_sensors[minor >> 3];
 
     /* Allocate a new Lunix character device private state structure */
     state = kzalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
@@ -132,15 +128,12 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
         goto out;
     }
 
-    state->type = type;
-    state->sensor = &sensor;
+    state->type = minor & 7;
+    state->sensor = &lunix_sensors[minor >> 3];
 
-    state->buf_lim = 0;
-    // state->buf_data;
-    state->buf_timestamp = 0;
+    state->buf_timestamp = private_data->sensor->msr_data[private_data->type]->last_update;
 
-    sema_init(&state->lock, 1);
-    // init_MUTEX(&state->lock);
+    sema_init(&state->lock, 1); // init_MUTEX(&state->lock);
 
     filp->private_data = state;
 out:
@@ -154,7 +147,6 @@ static int lunix_chrdev_release(struct inode *inode, struct file *filp) {
 }
 
 static long lunix_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned long arg) {
-    /* Why? */
     return -EINVAL;
 }
 
@@ -191,7 +183,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     }
 
     /* End of file */
-    if (*f_pos >= state->buf_lim) {
+    if (state->buf_lim == 0) {
         ret = 0;
         goto out;
     }
@@ -209,7 +201,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     ret = cnt;
 
     /* Auto-rewind on EOF mode? */
-    if (*f_pos >= state->buf_lim)
+    if (*f_pos == state->buf_lim)
         *f_pos = 0;
 out:
     up(&state->lock);
