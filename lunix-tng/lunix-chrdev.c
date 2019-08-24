@@ -90,7 +90,6 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
         res = lookup_light[value];
         break;
     }
-
     state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", res >= 0 ? ' ' : '-', res / 1000, res % 1000);
     state->buf_timestamp = last_update;
 
@@ -121,20 +120,15 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     minor = iminor(inode);
 
     /* Allocate a new Lunix character device private state structure */
-    state = kzalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
+    state = kmalloc(sizeof(struct lunix_chrdev_state_struct), GFP_KERNEL);
     if (!state) {
-        printk(KERN_ERR "Failed to allocate memory for state\n");
         ret = -ENOMEM;
         goto out;
     }
-
     state->type = minor & 7;
     state->sensor = &lunix_sensors[minor >> 3];
-
     state->buf_timestamp = state->sensor->msr_data[state->type]->last_update;
-
-    sema_init(&state->lock, 1); // init_MUTEX(&state->lock);
-
+    sema_init(state->lock, 1);
     filp->private_data = state;
 out:
     debug("leaving, with ret = %d\n", ret);
@@ -191,12 +185,10 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     /* Determine the number of cached bytes to copy to userspace */
     if (cnt > state->buf_lim - *f_pos)
         cnt = state->buf_lim - *f_pos;
-
     if (copy_to_user(usrbuf, state->buf_data + *f_pos, cnt)) {
         ret = -EFAULT;
         goto out;
     }
-
     *f_pos += cnt;
     ret = cnt;
 

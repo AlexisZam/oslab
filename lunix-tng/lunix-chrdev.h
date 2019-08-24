@@ -5,7 +5,6 @@
  * Lunix:TNG character device
  *
  * Vangelis Koukis <vkoukis@cslab.ece.ntua.gr>
- * 
  */
 
 #ifndef _LUNIX_CHRDEV_H
