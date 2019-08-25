@@ -59,7 +59,7 @@ static int virtcons_probe(struct virtio_device *vdev) {
     }
 
     /* Other initializations. */
-    /* ?? */
+    sema_init(&crdev->vq_sem, 1);
 
     /**
 	 * Grab the next minor number and put the device in the driver's list. 

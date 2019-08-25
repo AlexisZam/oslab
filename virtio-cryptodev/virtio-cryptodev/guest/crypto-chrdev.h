@@ -5,7 +5,7 @@
  *
  * Vangelis Koukis <vkoukis@cslab.ece.ntua.gr>
  * Dimitris Siakavaras <jimsiak@cslab.ece.ntua.gr>
- *
+ * 
  */
 
 #ifndef _CRYPTO_CHRDEV_H
