@@ -50,10 +50,10 @@ static int lunix_chrdev_state_needs_refresh(struct lunix_chrdev_state_struct *st
  * character device state lock held.
  */
 static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
-    struct lunix_sensor_struct *sensor;
+    struct lunix_sensor_struct *sensor = state->sensor;
     unsigned long flags;
-    uint32_t last_update, value;
-    long res;
+    uint32_t value;
+    long tmp;
 
     debug("entering\n");
 
@@ -61,7 +61,6 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
 	 * Grab the raw data quickly, hold the
 	 * spinlock for as little as possible.
 	 */
-    sensor = state->sensor;
     spin_lock_irqsave(&sensor->lock, flags);
 
     /*
@@ -71,7 +70,7 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
         spin_unlock_irqrestore(&sensor->lock, flags);
         return -EAGAIN;
     }
-    last_update = sensor->msr_data[state->type]->last_update;
+    state->buf_timestamp = sensor->msr_data[state->type]->last_update;
     value = sensor->msr_data[state->type]->values[0];
     spin_unlock_irqrestore(&sensor->lock, flags);
 
@@ -81,17 +80,16 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
 	 */
     switch (state->type) {
     case BATT:
-        res = lookup_voltage[value];
+        tmp = lookup_voltage[value];
         break;
     case TEMP:
-        res = lookup_temperature[value];
+        tmp = lookup_temperature[value];
         break;
     case LIGHT:
-        res = lookup_light[value];
+        tmp = lookup_light[value];
         break;
     }
-    state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", res >= 0 ? ' ' : '-', res / 1000, res % 1000);
-    state->buf_timestamp = last_update;
+    state->buf_lim = snprintf(state->buf_data, LUNIX_CHRDEV_BUFSZ, "%c%d.%d\n", tmp >= 0 ? ' ' : '-', tmp / 1000, tmp % 1000);
 
     debug("leaving\n");
     return 0;
@@ -104,9 +102,9 @@ static int lunix_chrdev_state_update(struct lunix_chrdev_state_struct *state) {
 
 static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     /* Declarations */
+    int ret;
     unsigned int minor;
     struct lunix_chrdev_state_struct *state;
-    int ret;
 
     debug("entering\n");
     ret = -ENODEV;
@@ -127,7 +125,7 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     }
     state->type = minor & 7;
     state->sensor = &lunix_sensors[minor >> 3];
-    state->buf_timestamp = state->sensor->msr_data[state->type]->last_update;
+    state->buf_timestamp = 0;
     sema_init(state->lock, 1);
     filp->private_data = state;
 out:
@@ -177,10 +175,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     }
 
     /* End of file */
-    if (state->buf_lim == 0) {
-        ret = 0;
-        goto out;
-    }
+    /* ? */
 
     /* Determine the number of cached bytes to copy to userspace */
     if (cnt > state->buf_lim - *f_pos)
@@ -193,8 +188,7 @@ static ssize_t lunix_chrdev_read(struct file *filp, char __user *usrbuf, size_t 
     ret = cnt;
 
     /* Auto-rewind on EOF mode? */
-    if (*f_pos == state->buf_lim)
-        *f_pos = 0;
+    /* ? */
 out:
     up(&state->lock);
     return ret;
