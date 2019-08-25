@@ -81,7 +81,7 @@ static void vq_handle_output(VirtIODevice *vdev, VirtQueue *vq) {
         switch (*ioctl_cmd) {
         case CIOCGSESSION:
             DEBUG("CIOCGSESSION");
-            session_op = elem->in_sg[0].iov_base;
+            session_op = (struct session_op *)elem->in_sg[0].iov_base;
             session_op->key = elem->out_sg[3].iov_base;
             host_return_val = elem->in_sg[1].iov_base;
             *host_return_val = ioctl(*host_fd, CIOCGSESSION, session_op);
@@ -89,14 +89,14 @@ static void vq_handle_output(VirtIODevice *vdev, VirtQueue *vq) {
 
         case CIOCFSESSION:
             DEBUG("CIOCFSESSION");
-            ses_id = elem->out_sg[3].iov_base;
+            ses_id = (unsigned int *)elem->out_sg[3].iov_base;
             host_return_val = elem->in_sg[0].iov_base;
             *host_return_val = ioctl(*host_fd, CIOCFSESSION, ses_id);
             break;
 
         case CIOCCRYPT:
             DEBUG("CIOCCRYPT");
-            crypt_op = elem->out_sg[3].iov_base;
+            crypt_op = (struct crypt_op *)elem->out_sg[3].iov_base;
             crypt_op->src = elem->out_sg[4].iov_base;
             crypt_op->iv = elem->out_sg[5].iov_base;
             crypt_op->dst = elem->in_sg[0].iov_base;
