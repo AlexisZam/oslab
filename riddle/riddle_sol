@@ -5,7 +5,7 @@ $ export I_NEED_TECH_HINTS=1
 $ ltrace ./riddle
 getenv("I_NEED_TECH_HINTS")                      = "1"
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   0: 'Hello there'
 Hint:          'Processes run system calls'.
@@ -19,7 +19,7 @@ $ strace ./riddle
 openat(AT_FDCWD, ".hello_there", O_RDONLY) = 4
 close(4)                                = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   1: 'Gatekeeper'
 Hint:          'Stand guard, let noone pass'.
@@ -33,7 +33,7 @@ $ chmod -w .hello_there
 $ strace ./riddle
 openat(AT_FDCWD, ".hello_there", O_WRONLY) = -1 EACCES (Permission denied)
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   2: 'A time to kill'
 Hint:          'Stuck in the dark, help me move on'.
@@ -56,7 +56,7 @@ pause()                                 = ? ERESTARTNOHAND (To be restarted if n
 --- SIGCONT {si_signo=SIGCONT, si_code=SI_USER, si_pid=13314, si_uid=1000} ---
 rt_sigreturn({mask=[]})                 = -1 EINTR (Interrupted system call)
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   3: 'what is the answer to life the universe and everything?'
 Hint:          'ltrace'.
@@ -70,7 +70,7 @@ $ ltrace ./riddle
 getenv("ANSWER")                                 = "42"
 strtol(0x7ffe383bad08, 0, 10, 11)                = 42
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   4: 'First-in, First-out'
 Hint:          'Mirror, mirror on the wall, who in this land is fairest of all?'.
@@ -108,7 +108,7 @@ write(4, "E", 1)                        = 1
 read(4, "E", 1)                         = 1
 close(4)                                = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   5: 'my favourite fd is 99'
 Hint:          'when I bang my head against the wall it goes: dup! dup! dup!'.
@@ -121,7 +121,7 @@ fcntl(99, F_GETFD)                      = -1 EBADF (Bad file descriptor)
 $ strace ./a.out
 fcntl(99, F_GETFD)                      = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   6: 'ping pong'
 Hint:          'help us play!'.
@@ -290,7 +290,7 @@ strace: Process 8204 attached
 --- SIGCHLD {si_signo=SIGCHLD, si_code=CLD_EXITED, si_pid=8204, si_uid=1000, si_status=0, si_utime=0, si_stime=0} ---
 wait4(-1, [{WIFEXITED(s) && WEXITSTATUS(s) == 0}], 0, NULL) = 8203
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   7: 'What's in a name?'
 Hint:          'A rose, by any other name...'.
@@ -307,7 +307,7 @@ $ ln .hello_there .hey_there
 lstat(".hello_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
 lstat(".hey_there", {st_mode=S_IFREG|0444, st_size=0, ...}) = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   8: 'Big Data'
 Hint:          'Checking footers'.
@@ -422,7 +422,7 @@ read(4, "abcdefghijklmnop", 16)         = 16
 write(1, ".", 1.)                        = 1
 close(4)                                = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge   9: 'Connect'
 Hint:          'Let me whisper in your ear'.
@@ -442,7 +442,7 @@ getpid()                                = 3198
 read(4, "3199\n", 100)                  = 5
 getpid()                                = 3198
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge  10: 'ESP'
 Hint:          'Can you read my mind?'.
@@ -468,7 +468,7 @@ $ strace -f ./a.out
 [pid   805] read(0,  <unfinished ...>
 [pid   805] <... read resumed> "A11CFA7C\n", 1024) = 9
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge  11: 'ESP-2'
 Hint:          'Can you read my mind?'.
@@ -495,7 +495,7 @@ $ strace -f ./a.out
 [pid  1925] read(0,  <unfinished ...>
 [pid  1925] <... read resumed> "7C88BE21\n", 1024) = 9
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge  12: 'A delicate change'
 Hint:          'Do only what is required, nothing more, nothing less'.
@@ -531,7 +531,7 @@ nanosleep({tv_sec=2, tv_nsec=0}, 0x7ffddfb6b4d0) = 0
 close(4)                                = 0
 unlink("/tmp/riddle-tLxPnb")            = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge  13: 'Bus error'
 Hint:          'Memquake! Don't lose the pages beneath your something something'.
@@ -563,7 +563,7 @@ $ strace -f ./a.out
 munmap(0x7f5fd6cd0000, 32768)           = 0
 close(5)                                = 0
 
-----------------------------------------------------------------------------------------------------
+----------------------------------------------------------------------
 
 Challenge  14: 'Are you the One?'
 Hint:          'Are you 32767? If not, reincarnate!'.

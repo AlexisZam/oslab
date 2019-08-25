@@ -1,3 +1,5 @@
+/* ch6.c */
+
 #include <unistd.h> // dup2, pipe
 
 int main() {
