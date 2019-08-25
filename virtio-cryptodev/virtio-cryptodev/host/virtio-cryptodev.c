@@ -44,11 +44,10 @@ static void vser_reset(VirtIODevice *vdev) {
 
 static void vq_handle_output(VirtIODevice *vdev, VirtQueue *vq) {
     VirtQueueElement *elem;
-    unsigned int *syscall_type, *ioctl_cmd;
+    unsigned int *syscall_type, *ioctl_cmd, *ses_id;
     int *host_fd, *host_return_val;
     struct session_op *session_op;
     struct crypt_op *crypt_op;
-    __u32 *ses_id;
 
     DEBUG_IN();
 
@@ -64,7 +63,7 @@ static void vq_handle_output(VirtIODevice *vdev, VirtQueue *vq) {
     switch (*syscall_type) {
     case VIRTIO_CRYPTODEV_SYSCALL_TYPE_OPEN:
         DEBUG("VIRTIO_CRYPTODEV_SYSCALL_TYPE_OPEN");
-        host_fd = elem.in_sg[0].iov_base;
+        host_fd = elem->in_sg[0].iov_base;
         *host_fd = open("/dev/crypto", O_RDWR);
         break;
 
@@ -77,7 +76,7 @@ static void vq_handle_output(VirtIODevice *vdev, VirtQueue *vq) {
     case VIRTIO_CRYPTODEV_SYSCALL_TYPE_IOCTL:
         DEBUG("VIRTIO_CRYPTODEV_SYSCALL_TYPE_IOCTL");
         host_fd = elem->out_sg[1].iov_base;
-        ioctl_cmd = elem.out_sg[2].iov_base;
+        ioctl_cmd = elem->out_sg[2].iov_base;
 
         switch (*ioctl_cmd) {
         case CIOCGSESSION:
