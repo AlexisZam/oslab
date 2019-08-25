@@ -194,7 +194,7 @@ static long crypto_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned lo
     unsigned char *session_key, *src, *iv, *dst;
     struct session_op *session_op;
     struct crypt_op *crypt_op;
-    u32 *ses_id;
+    __u32 *ses_id;
 
     debug("Entering");
 
