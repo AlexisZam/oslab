@@ -126,7 +126,7 @@ static int lunix_chrdev_open(struct inode *inode, struct file *filp) {
     state->type = minor & 7;
     state->sensor = &lunix_sensors[minor >> 3];
     state->buf_timestamp = 0;
-    sema_init(state->lock, 1);
+    sema_init(&state->lock, 1);
     filp->private_data = state;
 out:
     debug("leaving, with ret = %d\n", ret);
