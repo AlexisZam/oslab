@@ -324,7 +324,7 @@ static long crypto_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned lo
     case CIOCFSESSION:
         break;
     case CIOCCRYPT:
-        if (copy_to_user(((void __user *)arg)->dst, dst, crypt_op->len * sizeof(*dst))) {
+        if (copy_to_user(((struct crypt_op *)arg)->dst, dst, crypt_op->len * sizeof(*dst))) {
             ret = -EFAULT;
             goto fail;
         }
