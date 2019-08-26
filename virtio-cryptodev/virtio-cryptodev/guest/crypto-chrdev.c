@@ -192,7 +192,7 @@ static long crypto_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned lo
     unsigned int *syscall_type, *ioctl_cmd;
     int *host_fd, *host_return_val;
     unsigned char *session_key, *src, *iv, *dst;
-    struct session_op *session_op;
+    struct session_op *session_op = NULL;
     struct crypt_op *crypt_op;
     __u32 *ses_id;
 
