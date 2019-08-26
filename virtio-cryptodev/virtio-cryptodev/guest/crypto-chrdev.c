@@ -207,7 +207,7 @@ static long crypto_chrdev_ioctl(struct file *filp, unsigned int cmd, unsigned lo
     *host_fd = crof->host_fd;
     ioctl_cmd = kzalloc(sizeof(*ioctl_cmd), GFP_KERNEL);
     *ioctl_cmd = cmd;
-    host_return_val = kzalloc(sizeof(*ioctl_host_return_valcmd), GFP_KERNEL);
+    host_return_val = kzalloc(sizeof(*host_return_val), GFP_KERNEL);
 
     num_out = 0;
     num_in = 0;
