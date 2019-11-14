@@ -1,1 +1,1 @@
-# oslab
+# Operating Systems Lab
